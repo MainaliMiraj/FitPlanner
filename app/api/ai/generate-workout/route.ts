@@ -1,27 +1,33 @@
-import { createClient } from "@/lib/supabase/server"
-import { generateText } from "ai"
-import { google } from "@ai-sdk/google"
+import { createClient } from "@/lib/supabase/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
+    const supabase = await createClient();
 
+    // 🔐 Check if user is logged in
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user profile
-    const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+    // 🧠 Fetch user profile
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
 
-    const body = await request.json()
-    const { goal, difficulty, duration, equipment } = body
+    const body = await request.json();
+    const { goal, difficulty, duration, equipment } = body;
 
-    // Generate workout plan using AI
-    const prompt = `Generate a detailed workout plan based on the following requirements:
+    // 🧩 Build AI prompt
+    const prompt = `
+Generate a detailed workout plan based on the following user and requirements:
 
 User Profile:
 - Fitness Goal: ${profile?.fitness_goal || "general fitness"}
@@ -42,7 +48,7 @@ Workout Requirements:
 Please provide:
 1. A workout name
 2. A brief description
-3. A list of 5-7 exercises with:
+3. A list of 5–7 exercises with:
    - Exercise name
    - Sets (number)
    - Reps (number)
@@ -50,7 +56,7 @@ Please provide:
    - Rest time in seconds
    - Brief notes/form cues
 
-Format your response as JSON with this structure:
+Return ONLY valid JSON in this format:
 {
   "name": "workout name",
   "description": "workout description",
@@ -64,24 +70,57 @@ Format your response as JSON with this structure:
       "notes": "form cues"
     }
   ]
-}`
+}
+`;
 
-    const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
-      prompt,
-    })
+    // ⚙️ Initialize Google GenAI client
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    // Parse the AI response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    // 🧠 Generate content
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
+
+    const text = result.response.text();
+
+    // 🧩 Extract and validate JSON
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error("Failed to parse AI response")
+      throw new Error("Failed to parse AI response");
     }
 
-    const workoutPlan = JSON.parse(jsonMatch[0])
+    const workoutSchema = z.object({
+      name: z.string(),
+      description: z.string(),
+      exercises: z.array(
+        z.object({
+          name: z.string(),
+          sets: z.number(),
+          reps: z.number(),
+          weight_kg: z.number().optional(),
+          rest_seconds: z.number(),
+          notes: z.string().optional(),
+        })
+      ),
+    });
 
-    return Response.json(workoutPlan)
+    const workoutPlan = workoutSchema.parse(JSON.parse(jsonMatch[0]));
+
+    // ✅ Optionally save to Supabase
+    // await supabase.from("workouts").insert({
+    //   user_id: user.id,
+    //   plan_name: workoutPlan.name,
+    //   description: workoutPlan.description,
+    //   data: workoutPlan,
+    // });
+
+    return Response.json(workoutPlan);
   } catch (error) {
-    console.error("[v0] AI workout generation error:", error)
-    return Response.json({ error: "Failed to generate workout plan" }, { status: 500 })
+    console.error("[FitPlanner] AI workout generation error:", error);
+    return Response.json(
+      { error: "Failed to generate workout plan" },
+      { status: 500 }
+    );
   }
 }

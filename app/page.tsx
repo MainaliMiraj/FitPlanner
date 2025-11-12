@@ -1,24 +1,24 @@
-import { Button } from "@/components/ui/button"
-import { Dumbbell, Sparkles, TrendingUp } from "lucide-react"
-import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { Button } from "@/components/ui/button";
+import { Dumbbell, Sparkles, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export default async function HomePage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   // Redirect authenticated users to dashboard
   if (user) {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500">
@@ -31,7 +31,7 @@ export default async function HomePage() {
               <Link href="/auth/login">Sign In</Link>
             </Button>
             <Button asChild className="bg-rose-500 hover:bg-rose-600">
-              <Link href="/onboarding">Get Started</Link>
+              <Link href="/onboarding">Sign Up</Link>
             </Button>
           </div>
         </div>
@@ -50,14 +50,24 @@ export default async function HomePage() {
               Your AI-Powered Fitness Journey Starts Here
             </h1>
             <p className="text-xl text-muted-foreground mb-8 text-pretty leading-relaxed">
-              Transform your fitness goals into reality with personalized workout plans, nutrition tracking, and
-              AI-powered recommendations tailored just for you.
+              Transform your fitness goals into reality with personalized
+              workout plans, nutrition tracking, and AI-powered recommendations
+              tailored just for you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" className="bg-rose-500 hover:bg-rose-600 text-lg px-8">
-                <Link href="/onboarding">Start Free Trial</Link>
+              <Button
+                asChild
+                size="lg"
+                className="bg-rose-500 hover:bg-rose-600 text-lg px-8"
+              >
+                <Link href="/onboarding">Get Started</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="text-lg px-8 bg-transparent">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="text-lg px-8 bg-transparent"
+              >
                 <Link href="/auth/login">Sign In</Link>
               </Button>
             </div>
@@ -67,22 +77,29 @@ export default async function HomePage() {
         {/* Features Section */}
         <section className="bg-muted/50 py-24">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Everything You Need to Succeed</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+              Everything You Need to Succeed
+            </h2>
             <div className="grid gap-8 md:grid-cols-3 max-w-5xl mx-auto">
               <div className="text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 dark:bg-rose-950/30 mx-auto mb-4">
                   <Dumbbell className="h-8 w-8 text-rose-500" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Smart Workout Plans</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  Smart Workout Plans
+                </h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  AI-generated workouts customized to your fitness level and goals
+                  AI-generated workouts customized to your fitness level and
+                  goals
                 </p>
               </div>
               <div className="text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-lime-100 dark:bg-lime-950/30 mx-auto mb-4">
                   <Sparkles className="h-8 w-8 text-lime-500" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Nutrition Guidance</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  Nutrition Guidance
+                </h3>
                 <p className="text-muted-foreground leading-relaxed">
                   Personalized meal plans with macro tracking and AI suggestions
                 </p>
@@ -91,7 +108,9 @@ export default async function HomePage() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100 dark:bg-sky-950/30 mx-auto mb-4">
                   <TrendingUp className="h-8 w-8 text-sky-500" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Progress Tracking</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  Progress Tracking
+                </h3>
                 <p className="text-muted-foreground leading-relaxed">
                   Visualize your transformation with detailed metrics and charts
                 </p>
@@ -102,11 +121,18 @@ export default async function HomePage() {
 
         {/* CTA Section */}
         <section className="container mx-auto px-4 py-24 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Fitness?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Ready to Transform Your Fitness?
+          </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of users achieving their fitness goals with FitPlanner
+            Join thousands of users achieving their fitness goals with
+            FitPlanner
           </p>
-          <Button asChild size="lg" className="bg-rose-500 hover:bg-rose-600 text-lg px-8">
+          <Button
+            asChild
+            size="lg"
+            className="bg-rose-500 hover:bg-rose-600 text-lg px-8"
+          >
             <Link href="/onboarding">Get Started Free</Link>
           </Button>
         </section>
@@ -119,5 +145,5 @@ export default async function HomePage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

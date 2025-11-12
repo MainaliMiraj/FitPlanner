@@ -1,170 +1,150 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useChat } from "@ai-sdk/react"
-import { useEffect, useRef, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Loader2, AlertCircle, MessageCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { v4 as uuidv4 } from "uuid"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Send, Loader2, MessageCircle } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
+import ReactMarkdown from "react-markdown";
 
-interface FitnessCoachSidebarProps {
-  conversationId?: string
-}
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
 
-export function FitnessCoachSidebar({ conversationId }: FitnessCoachSidebarProps) {
-  const [id, setId] = useState<string>("")
-  const [isClient, setIsClient] = useState(false)
-  const [width, setWidth] = useState(320)
-  const [isResizing, setIsResizing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [inputValue, setInputValue] = useState("")
-  const containerRef = useRef<HTMLDivElement>(null)
+export function FitnessCoachSidebar({
+  conversationId,
+}: {
+  conversationId?: string;
+}) {
+  const [id, setId] = useState(conversationId || uuidv4());
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setIsClient(true)
-    if (conversationId) {
-      setId(conversationId)
-    } else {
-      setId(uuidv4())
-    }
-  }, [conversationId])
-
-  const { messages, append, isLoading, input, handleInputChange } = useChat({
-    api: "/api/ai/fitness-coach",
-    body: {
-      conversationId: id,
-    },
-    onError: (error: Error) => {
-      console.error("[v0] Chat error:", error)
-      setError(error?.message || "Failed to send message")
-    },
-  })
-
-  const scrollRef = useRef<HTMLDivElement>(null)
-
+  // 👇 Auto-scroll to latest message
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" })
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages])
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return
-      const newWidth = window.innerWidth - e.clientX
-      if (newWidth > 280 && newWidth < 600) {
-        setWidth(newWidth)
-      }
-    }
-
-    const handleMouseUp = () => {
-      setIsResizing(false)
-    }
-
-    if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove)
-      document.addEventListener("mouseup", handleMouseUp)
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove)
-      document.removeEventListener("mouseup", handleMouseUp)
-    }
-  }, [isResizing])
+  }, [messages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    if (!inputValue.trim()) return;
 
-    if (!inputValue.trim()) {
-      return
-    }
+    const userMessage: Message = { role: "user", content: inputValue };
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+    setIsLoading(true);
 
-    setError(null)
     try {
-      await append({ role: "user", content: inputValue })
-      setInputValue("")
-    } catch (err) {
-      console.error("[v0] Error sending message:", err)
-      setError("Failed to send message")
-    }
-  }
+      const res = await fetch("/api/ai/fitness-coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversationId: id,
+          messages: [...messages, userMessage],
+        }),
+      });
 
-  if (!isClient || !id) {
-    return null
-  }
+      const data = await res.json();
+      if (data.content) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.content },
+        ]);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "⚠️ Something went wrong. Please try again.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div
-      ref={containerRef}
-      className="hidden xl:flex flex-col border-l bg-background h-screen overflow-hidden"
-      style={{ width: `${width}px` }}
-    >
-      <div className="flex items-center gap-2 p-4 border-b flex-shrink-0">
+    <div className="hidden xl:flex flex-col border-l bg-background h-screen overflow-hidden w-[360px]">
+      {/* Header */}
+      <div className="flex items-center gap-2 p-4 border-b shrink-0">
         <MessageCircle className="h-5 w-5 text-rose-500" />
-        <h3 className="font-semibold text-sm">AI Coach</h3>
+        <h3 className="font-semibold text-sm">Your Personal Fitness Coach</h3>
       </div>
 
-      {/* Resize handle */}
-      <div
-        onMouseDown={() => setIsResizing(true)}
-        className="absolute left-0 top-0 w-1 h-full cursor-col-resize hover:bg-rose-500/30 transition-colors"
-      />
-
-      {/* Messages */}
-      <ScrollArea className="flex-1">
-        <div className="space-y-3 p-4">
-          {error && (
-            <div className="flex gap-2 rounded-lg bg-red-500/10 border border-red-500/20 p-2">
-              <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-red-600">{error}</p>
-            </div>
-          )}
-
-          {messages.length === 0 ? (
-            <div className="text-center py-8">
-              <MessageCircle className="h-6 w-6 mx-auto text-muted-foreground mb-2 opacity-50" />
-              <p className="text-xs text-muted-foreground">Ask about workouts, nutrition, or fitness tips</p>
-            </div>
-          ) : (
-            <>
-              {messages.map((message) => (
+      {/* 👇 Scrollable chat area */}
+      <div className="flex-1 h-0">
+        <ScrollArea className="h-full overflow-y-auto">
+          <div className="flex flex-col justify-end h-full space-y-3 p-4">
+            {messages.length === 0 ? (
+              <div className="text-center py-8 text-xs text-muted-foreground opacity-70">
+                <MessageCircle className="h-5 w-5 mx-auto mb-2 opacity-50" />
+                Ask about workouts, nutrition, or recovery tips
+              </div>
+            ) : (
+              messages.map((m, i) => (
                 <div
-                  key={message.id}
-                  className={cn("flex gap-2", message.role === "user" ? "justify-end" : "justify-start")}
+                  key={i}
+                  className={`flex ${
+                    m.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
-                  {message.role === "assistant" && (
-                    <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-rose-500/20">
-                      <MessageCircle className="h-3 w-3 text-rose-500" />
-                    </div>
-                  )}
                   <div
-                    className={cn(
-                      "rounded-lg px-3 py-2 text-xs max-w-xs break-words",
-                      message.role === "user" ? "bg-rose-500 text-white" : "bg-muted",
-                    )}
+                    className={`rounded-lg px-3 py-2 text-xs max-w-[80%] break-words whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-rose-500 text-white"
+                        : "bg-muted text-foreground"
+                    }`}
                   >
-                    {message.content}
+                    {m.role === "assistant" ? (
+                      <ReactMarkdown
+                        components={{
+                          p: ({ node, ...props }) => (
+                            <p className="mb-2" {...props} />
+                          ),
+                          strong: ({ node, ...props }) => (
+                            <strong className="font-semibold" {...props} />
+                          ),
+                          ul: ({ node, ...props }) => (
+                            <ul className="list-disc pl-4 mb-2" {...props} />
+                          ),
+                          li: ({ node, ...props }) => (
+                            <li className="mb-1" {...props} />
+                          ),
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    ) : (
+                      m.content
+                    )}
                   </div>
                 </div>
-              ))}
-              {isLoading && (
-                <div className="flex gap-2 justify-start">
-                  <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-rose-500/20">
-                    <Loader2 className="h-3 w-3 text-rose-500 animate-spin" />
-                  </div>
+              ))
+            )}
+
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="rounded bg-rose-500/10 p-2">
+                  <Loader2 className="h-3 w-3 text-rose-500 animate-spin" />
                 </div>
-              )}
-              <div ref={scrollRef} />
-            </>
-          )}
-        </div>
-      </ScrollArea>
+              </div>
+            )}
+
+            <div ref={scrollRef} />
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Input */}
-      <div className="border-t p-3 flex-shrink-0">
+      <div className="border-t p-3 shrink-0">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             placeholder="Ask..."
@@ -185,5 +165,5 @@ export function FitnessCoachSidebar({ conversationId }: FitnessCoachSidebarProps
         </form>
       </div>
     </div>
-  )
+  );
 }
