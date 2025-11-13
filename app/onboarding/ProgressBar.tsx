@@ -1,14 +1,10 @@
 "use client";
 
-import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface ProgressBarProps {
-  /** Percentage from 0–100 */
   progress: number;
-  /** Optional label (e.g., “Step 3 of 20”) */
   label?: string;
-  /** Optional extra classes for the outer wrapper */
   className?: string;
 }
 
@@ -20,19 +16,19 @@ export default function ProgressBar({
   const pct = Math.max(0, Math.min(100, Math.round(progress)));
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full mb-8", className)}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm md:text-base text-white/80">
-          {label ?? "Your Progress"}
+        <span className="text-sm md:text-base text-rose-500 font-bold">
+          {label ?? "Progress:"}
         </span>
-        <span className="text-sm md:text-base font-medium text-white">
+        <span className="text-sm md:text-base font-extrabold text-rose-500 ">
           {pct}%
         </span>
       </div>
 
       {/* Track */}
       <div
-        className="relative h-2 w-full overflow-hidden rounded-full bg-white/15"
+        className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
