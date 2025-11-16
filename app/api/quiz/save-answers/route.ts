@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     return Response.json({ success: true })
   } catch (error) {
-    console.error("[v0] Quiz save error:", error)
+    console.error(" Quiz save error:", error)
     return Response.json({ error: "Failed to save quiz answers" }, { status: 500 })
   }
 }
