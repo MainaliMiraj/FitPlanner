@@ -1,9 +1,9 @@
 "use client";
 
-import SingleSelect from "./components/SingleSelect";
-import MultiSelect from "./components/MultiSelect";
-import InputQuestion from "./components/InputQuestion";
-import type { Question } from "./types";
+import SingleSelect from "../../components/onBoarding/SingleSelect";
+import MultiSelect from "../../components/onBoarding/MultiSelect";
+import InputQuestion from "../../components/onBoarding/InputQuestion";
+import type { Question } from "../../types/types";
 
 export default function QuestionCard({
   question,

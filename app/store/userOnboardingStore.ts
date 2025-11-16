@@ -10,7 +10,7 @@ interface OnboardingState {
   answers: Record<string, string | string[]>; // ✅ simplified type
 }
 
-export const useOnboardingStore = create<OnboardingState>()(
+export const userOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({
       currentQuestion: 0,

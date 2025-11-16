@@ -3,7 +3,7 @@
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { CheckCircle2 } from "lucide-react";
-import { OptionCardProps } from "../types";
+import { OptionCardProps } from "../../types/types";
 
 export default function OptionCard({
   label,

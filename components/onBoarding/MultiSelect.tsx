@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import OptionCard from "./OptionCard";
 import { Input } from "@/components/ui/input";
-import type { Question } from "../types";
+import type { Question } from "../../types/types";
 
 export default function MultiSelect({
   question,

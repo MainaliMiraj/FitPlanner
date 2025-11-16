@@ -3,18 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useOnboardingStore } from "./store/useOnboardingStore";
-import { QUESTIONS } from "./data/Questions";
+import { userOnboardingStore } from "../store/userOnboardingStore";
+import { QUESTIONS } from "../data/Questions";
 import QuestionCard from "./QuestionCard";
 import ProgressBar from "./ProgressBar";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, CheckCircle2 } from "lucide-react";
-import QuestionTransition from "./components/QuestionTransition";
+import QuestionTransition from "../../components/onBoarding/QuestionTransition";
 
 export default function OnBoardingQuiz() {
-  const [completing, setCompleting] = useState(false); //for the smooth quiz exit and signup page entry animation.
+  const [completing, setCompleting] = useState(false);
   const { currentQuestion, answers, setAnswer, nextQuestion, prevQuestion } =
-    useOnboardingStore();
+    userOnboardingStore();
 
   const router = useRouter();
   const question = QUESTIONS[currentQuestion];
@@ -121,7 +121,7 @@ export default function OnBoardingQuiz() {
             <Button
               onClick={handlePrevious}
               disabled={currentQuestion === 0}
-              className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white"
+              className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous
@@ -132,17 +132,17 @@ export default function OnBoardingQuiz() {
               <Button
                 onClick={handleNext}
                 disabled={!isAnswered}
-                className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white"
+                className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white cursor-pointer "
               >
                 {isLast ? (
                   <>
-                    <CheckCircle2 className="w-5 h-5" />
+                    <CheckCircle2 className="w-5 h-5 p-2r" />
                     Complete
                   </>
                 ) : (
                   <>
                     Next
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-5 h-5 p-2" />
                   </>
                 )}
               </Button>

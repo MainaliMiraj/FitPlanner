@@ -42,7 +42,7 @@ export default async function HomePage() {
         <section className="container mx-auto px-4 py-24 md:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-8 flex justify-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-purple-500">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-linear-to-br from-rose-500 to-purple-500">
                 <Dumbbell className="h-10 w-10 text-white" />
               </div>
             </div>

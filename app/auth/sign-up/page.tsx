@@ -13,11 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
-import { useOnboardingStore } from "@/app/onboarding/store/useOnboardingStore";
+import { userOnboardingStore } from "@/app/store/userOnboardingStore";
 import useRegister from "@/hooks/useRegister";
 
 export default function SignUpPage() {
-  const { answers } = useOnboardingStore();
+  const { answers } = userOnboardingStore();
   console.log(answers);
   const {
     handleSignUp,
