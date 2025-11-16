@@ -1,9 +1,6 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,82 +14,24 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 import { useOnboardingStore } from "@/app/onboarding/store/useOnboardingStore";
+import useRegister from "@/hooks/useRegister";
 
 export default function SignUpPage() {
-  const router = useRouter();
-  const supabase = createClient();
-
-  // ✅ Pull quiz data & BMI directly from Zustand
-  const { answers,resetQuiz } = useOnboardingStore();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!displayName.trim()) return setError("Please enter your name");
-    if (!email.trim()) return setError("Please enter your email");
-    if (password !== repeatPassword) return setError("Passwords do not match");
-    if (password.length < 8)
-      return setError("Password must be at least 6 characters");
-
-    // ✅ Ensure quiz data is present
-    if (!answers || Object.keys(answers).length === 0) {
-      setError("Please complete the personalization quiz before signing up.");
-      router.replace("/onboarding");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // 1️⃣ Create user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-            `${window.location.origin}/dashboard`,
-          data: { display_name: displayName },
-        },
-      });
-
-      if (authError) throw authError;
-      const user = authData.user;
-      if (!user) throw new Error("Failed to create user");
-
-      // 2️⃣ Prepare profile data
-      const profileData = {
-        display_name: displayName,
-        bmi,
-        ...answers,
-      };
-
-      // 3️⃣ Upsert (insert or update) into `profiles`
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .upsert({ id: user.id, ...profileData })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
-
-      // 4️⃣ Clear quiz state and redirect
-      resetQuiz();
-      router.push("/auth/sign-up-success");
-    } catch (err: any) {
-      console.error("[sign-up] Error:", err);
-      setError(err.message || "An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { answers } = useOnboardingStore();
+  console.log(answers);
+  const {
+    handleSignUp,
+    displayName,
+    setDisplayName,
+    repeatPassword,
+    setRepeatPassword,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    error,
+    isLoading,
+  } = useRegister({ answers });
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-linear-to-br from-background via-background to-rose-500/5">

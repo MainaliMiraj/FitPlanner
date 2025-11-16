@@ -3,11 +3,11 @@ import { persist } from "zustand/middleware";
 
 interface OnboardingState {
   currentQuestion: number;
-  answers: Record<string, string | string[]>;
   setAnswer: (id: string, value: string | string[]) => void;
   nextQuestion: () => void;
   prevQuestion: () => void;
   resetQuiz: () => void;
+  answers: Record<string, string | string[]>; // ✅ simplified type
 }
 
 export const useOnboardingStore = create<OnboardingState>()(
