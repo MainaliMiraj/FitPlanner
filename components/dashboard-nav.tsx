@@ -1,12 +1,24 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { createClient } from "@/lib/supabase/client"
-import { Dumbbell, LayoutDashboard, Apple, TrendingUp, LogOut, Menu, X, User } from "lucide-react"
-import { useState } from "react"
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import {
+  Dumbbell,
+  LayoutDashboard,
+  Apple,
+  TrendingUp,
+  LogOut,
+  Menu,
+  X,
+  User,
+} from "lucide-react";
+import { useState } from "react";
+import { useUserStore } from "@/stores/use-user-store";
+import { useNutritionStore } from "@/stores/use-nutrition-store";
+import { userOnboardingStore } from "@/app/store/userOnboardingStore";
 
 const navItems = [
   {
@@ -32,29 +44,39 @@ const navItems = [
     icon: TrendingUp,
     color: "text-sky-500",
   },
-]
+];
 
 const profileNav = {
   title: "Profile",
   href: "/dashboard/profile",
   icon: User,
-}
+};
 
 export function DashboardNav() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const ProfileIcon = profileNav.icon
-  const isProfileActive = pathname === profileNav.href
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const ProfileIcon = profileNav.icon;
+  const isProfileActive = pathname === profileNav.href;
+  const resetUserStore = useUserStore((state) => state.reset);
+  const resetNutritionStore = useNutritionStore((state) => state.reset);
 
   const handleLogout = async () => {
-    setIsLoggingOut(true)
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/auth/login")
-    router.refresh()
-  }
+    setIsLoggingOut(true);
+    const supabase = createClient();
+    resetUserStore();
+    resetNutritionStore();
+    userOnboardingStore.getState().resetQuiz();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("fp-user-store");
+      localStorage.removeItem("fp-nutrition-store");
+      localStorage.removeItem("onboarding-storage");
+    }
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+    router.refresh();
+  };
 
   return (
     <>
@@ -146,7 +168,7 @@ export function DashboardNav() {
       )}
 
       {/* Desktop Sidebar */}
-      <nav className="hidden lg:flex w-64 flex-col border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="hidden lg:flex w-64 flex-col border-r bg-background/95 backdrop-blur backdrop-filter:bg-background/60">
         <div className="flex items-center gap-2 p-6 border-b">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500">
             <Dumbbell className="h-5 w-5 text-white" />

@@ -8,10 +8,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, MessageCircle, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
+};
+
+const markdownComponents: Components = {
+  p: ({ node, ...props }) => <p {...props} />,
+  strong: ({ node, ...props }) => (
+    <strong className="font-semibold" {...props} />
+  ),
+  ul: ({ node, ...props }) => <ul className="list-disc pl-4" {...props} />,
+  li: ({ node, ...props }) => <li className="mb-1" {...props} />,
 };
 
 export function FitnessCoachSidebar({
@@ -83,7 +93,7 @@ export function FitnessCoachSidebar({
           isOpen ? "Close fitness coach chat" : "Open fitness coach chat"
         }
         onClick={toggleChat}
-        className="fixed top-4 right-4 z-40 h-14 w-14 rounded-full bg-rose-500 text-white shadow-2xl hover:bg-rose-600 focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer"
+        className="fixed bottom-4 right-4 z-40 h-14 w-14 rounded-full bg-rose-500 text-white shadow-2xl hover:bg-rose-600 focus-visible:ring-2 focus-visible:ring-rose-400 cursor-pointer"
       >
         {isOpen ? (
           <X className="h-5 w-5" />
@@ -152,23 +162,11 @@ export function FitnessCoachSidebar({
                         )}
                       >
                         {m.role === "assistant" ? (
-                          <ReactMarkdown
-                            className="space-y-2 leading-relaxed"
-                            components={{
-                              p: ({ node, ...props }) => <p {...props} />,
-                              strong: ({ node, ...props }) => (
-                                <strong className="font-semibold" {...props} />
-                              ),
-                              ul: ({ node, ...props }) => (
-                                <ul className="list-disc pl-4" {...props} />
-                              ),
-                              li: ({ node, ...props }) => (
-                                <li className="mb-1" {...props} />
-                              ),
-                            }}
-                          >
-                            {m.content}
-                          </ReactMarkdown>
+                          <div className="space-y-2 leading-relaxed">
+                            <ReactMarkdown components={markdownComponents}>
+                              {m.content}
+                            </ReactMarkdown>
+                          </div>
                         ) : (
                           m.content
                         )}
