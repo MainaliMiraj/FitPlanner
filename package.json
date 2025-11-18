@@ -65,13 +65,11 @@
     "vaul": "latest"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
     "@tailwindcss/postcss": "^4.1.9",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "globals": "^16.5.0",
-    "jiti": "^2.6.1",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
