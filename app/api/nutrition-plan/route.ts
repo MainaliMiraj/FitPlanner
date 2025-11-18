@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { z } from "zod"
 
 import { createClient } from "@/lib/supabase/server"
 import { buildProfileSummary, extractQuizData } from "@/lib/nutrition/utils"
-import { nutritionPlanSchema } from "@/types/nutrition"
+import { normalizeNutritionPlan } from "@/types/nutrition"
 import type { NutritionPlan } from "@/types/nutrition"
 import type { ProfileData, QuizAnswers } from "@/types/user"
 
-const payloadSchema = z
-  .object({
-    profile: z.record(z.any()).optional(),
-    quizData: z.record(z.any()).optional(),
-  })
-  .optional()
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null
 
 export const maxDuration = 60
 
@@ -28,9 +22,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const parsedBody = payloadSchema.safeParse(await request.json().catch(() => ({})))
-    const incomingProfile = parsedBody.success && parsedBody.data?.profile ? (parsedBody.data.profile as ProfileData) : null
-    const incomingQuiz = parsedBody.success && parsedBody.data?.quizData ? (parsedBody.data.quizData as QuizAnswers) : null
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
+    const incomingProfile = isRecord(body.profile) ? (body.profile as ProfileData) : null
+    const incomingQuiz = isRecord(body.quizData) ? (body.quizData as QuizAnswers) : null
 
     let profile = incomingProfile
     if (!profile) {
@@ -64,15 +58,14 @@ export async function POST(request: Request) {
       throw new Error("AI response did not contain valid JSON")
     }
 
-    const result = nutritionPlanSchema.safeParse(JSON.parse(jsonMatch[0]))
-    if (!result.success) {
-      console.error("AI nutrition plan schema mismatch", result.error)
+    const parsedPlan = normalizeNutritionPlan(JSON.parse(jsonMatch[0]))
+    if (!parsedPlan) {
       throw new Error("Unable to parse AI response")
     }
 
     const normalizedPlan: NutritionPlan = {
-      ...result.data,
-      generatedAt: result.data.generatedAt || new Date().toISOString(),
+      ...parsedPlan,
+      generatedAt: parsedPlan.generatedAt || new Date().toISOString(),
     }
 
     const { data: existingPlan } = await supabase

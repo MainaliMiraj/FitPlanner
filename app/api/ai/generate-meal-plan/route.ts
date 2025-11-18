@@ -1,6 +1,23 @@
 import { createClient } from "@/lib/supabase/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { z } from "zod";
+
+interface MealPlanMeal {
+  name: string;
+  calories: number;
+  ingredients: string[];
+}
+
+interface MealPlan {
+  name: string;
+  description: string;
+  meals: MealPlanMeal[];
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+const isString = (value: unknown): value is string => typeof value === "string";
+const isNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
 
 export async function POST(request: Request) {
   try {
@@ -103,19 +120,12 @@ Return ONLY valid JSON in this format:
     if (!jsonMatch) {
       throw new Error("Invalid response format");
     }
-    const mealPlanSchema = z.object({
-      name: z.string(),
-      description: z.string(),
-      meals: z.array(
-        z.object({
-          name: z.string(),
-          calories: z.number(),
-          ingredients: z.array(z.string()),
-        })
-      ),
-    });
 
-    const mealPlan = JSON.parse(jsonMatch[0]);
+    const mealPlan = parseMealPlan(JSON.parse(jsonMatch[0]));
+    if (!mealPlan) {
+      throw new Error("Invalid meal plan data");
+    }
+
     return Response.json(mealPlan);
   } catch (error) {
     console.error("[FitPlanner] Meal plan generation error:", error);
@@ -124,4 +134,40 @@ Return ONLY valid JSON in this format:
       { status: 500 }
     );
   }
+}
+
+function parseMealPlan(payload: unknown): MealPlan | null {
+  if (!isRecord(payload)) return null;
+  if (!isString(payload.name) || !isString(payload.description)) return null;
+  if (!Array.isArray(payload.meals)) return null;
+
+  const meals = payload.meals
+    .filter((meal): meal is Record<string, unknown> => isRecord(meal))
+    .map((meal) => {
+      if (!isString(meal.name)) return null;
+      if (!isNumber(meal.calories)) return null;
+      if (!Array.isArray(meal.ingredients)) return null;
+
+      const ingredients = meal.ingredients.filter(
+        (ingredient): ingredient is string =>
+          typeof ingredient === "string" && ingredient.trim().length > 0
+      );
+
+      if (ingredients.length === 0) return null;
+
+      return {
+        name: meal.name,
+        calories: meal.calories,
+        ingredients,
+      };
+    })
+    .filter((meal): meal is MealPlanMeal => Boolean(meal));
+
+  if (meals.length === 0) return null;
+
+  return {
+    name: payload.name,
+    description: payload.description,
+    meals,
+  };
 }

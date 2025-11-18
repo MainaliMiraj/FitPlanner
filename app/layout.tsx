@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Barlow } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { AppProviders } from "@/context/app-providers";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -31,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={barlow.className}>
       <body className="antialiased bg-gray-50 text-gray-900">
-        {children}
+        <AppProviders>{children}</AppProviders>
 
         <Toaster
           position="top-center"

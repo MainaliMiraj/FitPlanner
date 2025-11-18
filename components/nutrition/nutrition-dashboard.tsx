@@ -193,7 +193,7 @@ function RecipesCard({ recipes }: Pick<NutritionPlan, "recipes">) {
   )
 }
 
-function ShoppingListCard({ list }: Pick<NutritionPlan, "shoppingList">) {
+function ShoppingListCard({ list }: { list: NutritionPlan["shoppingList"] }) {
   return (
     <Card className="border border-rose-100/60 bg-white/70">
       <CardHeader>

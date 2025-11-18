@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { userOnboardingStore } from "../store/userOnboardingStore";
-import { QUESTIONS } from "../data/Questions";
+import { useOnboarding } from "@/context/onboarding-context";
+import { QUESTIONS } from "../../data/Questions";
 import QuestionCard from "./QuestionCard";
 import ProgressBar from "./ProgressBar";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import QuestionTransition from "../../components/onBoarding/QuestionTransition";
 export default function OnBoardingQuiz() {
   const [completing, setCompleting] = useState(false);
   const { currentQuestion, answers, setAnswer, nextQuestion, prevQuestion } =
-    userOnboardingStore();
+    useOnboarding();
 
   const router = useRouter();
   const question = QUESTIONS[currentQuestion];

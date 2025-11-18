@@ -16,9 +16,9 @@ import {
   User,
 } from "lucide-react";
 import { useState } from "react";
-import { useUserStore } from "@/stores/use-user-store";
-import { useNutritionStore } from "@/stores/use-nutrition-store";
-import { userOnboardingStore } from "@/app/store/userOnboardingStore";
+import { useUser } from "@/context/user-context";
+import { useNutrition } from "@/context/nutrition-context";
+import { useOnboarding } from "@/context/onboarding-context";
 
 const navItems = [
   {
@@ -59,20 +59,16 @@ export function DashboardNav() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const ProfileIcon = profileNav.icon;
   const isProfileActive = pathname === profileNav.href;
-  const resetUserStore = useUserStore((state) => state.reset);
-  const resetNutritionStore = useNutritionStore((state) => state.reset);
+  const { reset: resetUserStore } = useUser();
+  const { reset: resetNutritionStore } = useNutrition();
+  const { resetQuiz } = useOnboarding();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     const supabase = createClient();
     resetUserStore();
     resetNutritionStore();
-    userOnboardingStore.getState().resetQuiz();
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("fp-user-store");
-      localStorage.removeItem("fp-nutrition-store");
-      localStorage.removeItem("onboarding-storage");
-    }
+    resetQuiz();
     await supabase.auth.signOut();
     router.push("/auth/login");
     router.refresh();

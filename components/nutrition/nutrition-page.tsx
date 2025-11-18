@@ -1,21 +1,25 @@
-import { redirect } from "next/navigation"
+import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server"
-import { NutritionPageClient } from "@/components/nutrition/nutrition-page-client"
-import { nutritionPlanSchema, type NutritionPlan } from "@/types/nutrition"
-import type { ProfileData } from "@/types/user"
+import { createClient } from "@/lib/supabase/server";
+import { NutritionPageClient } from "@/components/nutrition/nutrition-page-client";
+import { normalizeNutritionPlan, type NutritionPlan } from "@/types/nutrition";
+import type { ProfileData } from "@/types/user";
 
 export default async function NutritionPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/auth/login")
+    redirect("/auth/login");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
   const { data: planRow } = await supabase
     .from("nutrition_plans")
@@ -23,15 +27,17 @@ export default async function NutritionPage() {
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false })
     .limit(1)
-    .maybeSingle()
+    .maybeSingle();
 
-  let parsedPlan: NutritionPlan | null = null
+  let parsedPlan: NutritionPlan | null = null;
   if (planRow?.plan) {
-    const result = nutritionPlanSchema.safeParse(planRow.plan)
-    if (result.success) {
-      parsedPlan = result.data
-    }
+    parsedPlan = normalizeNutritionPlan(planRow.plan);
   }
 
-  return <NutritionPageClient initialProfile={(profile as ProfileData) ?? null} initialPlan={parsedPlan} />
+  return (
+    <NutritionPageClient
+      initialProfile={(profile as ProfileData) ?? null}
+      initialPlan={parsedPlan}
+    />
+  );
 }

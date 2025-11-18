@@ -1,4 +1,4 @@
-import { Question } from "../../types/types";
+import { Question } from "../types/types";
 
 export const QUESTIONS: Question[] = [
   // FITNESS GOAL

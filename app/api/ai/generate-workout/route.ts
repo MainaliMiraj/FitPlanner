@@ -1,6 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { z } from "zod";
+
+interface WorkoutExercise {
+  name: string;
+  sets: number;
+  reps: number;
+  weight_kg?: number;
+  rest_seconds: number;
+  notes?: string;
+}
+
+interface WorkoutPlan {
+  name: string;
+  description: string;
+  exercises: WorkoutExercise[];
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+const isString = (value: unknown): value is string => typeof value === "string";
+const isNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
 
 export async function POST(request: Request) {
   try {
@@ -90,22 +110,10 @@ Return ONLY valid JSON in this format:
       throw new Error("Failed to parse AI response");
     }
 
-    const workoutSchema = z.object({
-      name: z.string(),
-      description: z.string(),
-      exercises: z.array(
-        z.object({
-          name: z.string(),
-          sets: z.number(),
-          reps: z.number(),
-          weight_kg: z.number().optional(),
-          rest_seconds: z.number(),
-          notes: z.string().optional(),
-        })
-      ),
-    });
-
-    const workoutPlan = workoutSchema.parse(JSON.parse(jsonMatch[0]));
+    const workoutPlan = parseWorkoutPlan(JSON.parse(jsonMatch[0]));
+    if (!workoutPlan) {
+      throw new Error("Invalid workout plan");
+    }
 
     // ✅ Optionally save to Supabase
     // await supabase.from("workouts").insert({
@@ -123,4 +131,39 @@ Return ONLY valid JSON in this format:
       { status: 500 }
     );
   }
+}
+
+function parseWorkoutPlan(payload: unknown): WorkoutPlan | null {
+  if (!isRecord(payload)) return null;
+  if (!isString(payload.name) || !isString(payload.description)) return null;
+  if (!Array.isArray(payload.exercises)) return null;
+
+  const exercises = payload.exercises
+    .filter((exercise): exercise is Record<string, unknown> => isRecord(exercise))
+    .map((exercise) => {
+      if (!isString(exercise.name)) return null;
+      if (!isNumber(exercise.sets) || !isNumber(exercise.reps)) return null;
+      if (!isNumber(exercise.rest_seconds)) return null;
+
+      const parsed: WorkoutExercise = {
+        name: exercise.name,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        rest_seconds: exercise.rest_seconds,
+      };
+
+      if (isNumber(exercise.weight_kg)) parsed.weight_kg = exercise.weight_kg;
+      if (isString(exercise.notes)) parsed.notes = exercise.notes;
+
+      return parsed;
+    })
+    .filter((exercise): exercise is WorkoutExercise => Boolean(exercise));
+
+  if (exercises.length === 0) return null;
+
+  return {
+    name: payload.name,
+    description: payload.description,
+    exercises,
+  };
 }
